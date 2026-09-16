@@ -28,109 +28,67 @@ La integridad básica de los datos es consistente:
 - La combinación Moto vs. Auto supera los 13.000 hechos; el filtro utilizado produce 15.247 registros.
 - La prevención de `data leakage` está correctamente planteada para las futuras etapas de modelado.
 
-## Findings y riesgos
+---
 
-### 1. Rutas de carga incorrectas
+## Findings, riesgos y estado de resolución
 
-El notebook busca los CSV en la raíz y, como alternativa, en `TP-grupal/`:
+### - [x] 1. Rutas de carga incorrectas (RESUELTO)
 
-```python
-path_hechos = 'siniestros_viales_hechos.csv'
-path_victimas = 'siniestros_viales_victimas.csv'
+El notebook buscaba los CSV en la raíz y en `TP-grupal/`. La estructura real del repositorio contiene los archivos en la carpeta `data/`.
 
-if not os.path.exists(path_hechos):
-    path_hechos = 'TP-grupal/siniestros_viales_hechos.csv'
-```
-
-La estructura real es:
-
-```text
-data/siniestros_viales_hechos.csv
-data/siniestros_viales_victimas.csv
-```
-
-Por lo tanto, el notebook no es reproducible desde la raíz del repositorio sin modificar las rutas.
-
-**Recomendación:** usar rutas relativas a `data/`:
+**Estado:** ✅ **Resuelto.**
+Se actualizaron las rutas en el notebook para priorizar `data/siniestros_viales_hechos.csv` y `data/siniestros_viales_victimas.csv`
 
 ```python
 path_hechos = 'data/siniestros_viales_hechos.csv'
 path_victimas = 'data/siniestros_viales_victimas.csv'
 ```
 
-También debe actualizarse la estructura indicada en el README.
+### - [x] 2. Uso de datasets locales versus GitHub (RESUELTO)
 
-### 2. Uso de datasets locales versus GitHub
+Se desaconsejó la dependencia de URLs remotas para la ejecución local.
 
-No se recomienda que el notebook dependa de URLs de GitHub como mecanismo principal de carga. Los archivos ya forman parte del repositorio y las rutas relativas son más reproducibles, funcionan sin conexión y no dependen de cambios en la URL o en la rama.
+**Estado:** ✅ **Resuelto.**
+Se mantienen los CSV en la carpeta local `data/`, se configuran rutas relativas y se documentó la fuente oficial de BA Data en el README.
 
-La alternativa recomendada es:
+### - [x] 3. Porcentaje de avenidas (RESUELTO EN DOCUMENTACIÓN)
 
-- Mantener los CSV en `data/`.
-- Cargarlos con rutas relativas.
-- Documentar en el README el repositorio y la fuente original de BA Data.
-- Opcionalmente, ofrecer una URL `raw.githubusercontent.com` como alternativa de descarga o respaldo.
+El porcentaje del 57,4% de siniestros en avenidas corresponde exclusivamente a los hechos con tipo de vía informado (sobre el total general representa el 46,4%).
 
-Si los archivos fueran demasiado grandes para Git, habría que usar Git LFS, una descarga desde la fuente oficial o un almacenamiento de datos versionado. En el estado actual, los CSV ya están disponibles en el repositorio.
+**Estado:** ✅ **Resuelto en README.**
+Se reformuló en el README explicitando el denominador: *"Entre los hechos con tipología de vía informada, las Avenidas concentran el 57,3% de los choques (46,4% sobre el total general)"*.
 
-### 3. Porcentaje de avenidas
+### - [ ] 4. Tasas de letalidad por modo (PENDIENTE DE REVISIÓN EN TEXTO DE CELDAS)
 
-El README y el notebook indican que las avenidas concentran el 57,4% de los choques. Ese porcentaje sólo se obtiene cuando se excluyen los registros cuyo tipo de vía no está informado. Sobre el total de hechos, las avenidas representan aproximadamente 46,4%.
-
-**Recomendación:** reformular como:
-
-> Entre los siniestros con tipo de vía informado, las avenidas representan aproximadamente el 57,3%.
-
-Debe explicitarse siempre el denominador.
-
-### 4. Tasas de letalidad por modo
-
-La celda de severidad agrupa hechos según `modo_desplazamiento_victima` y divide las víctimas mortales por la cantidad de hechos. Esa métrica no es estrictamente una letalidad individual, porque el denominador no es la cantidad de víctimas.
-
-Con el cálculo actual se obtienen aproximadamente:
+La celda de severidad agrupa hechos según `modo_desplazamiento_victima` y divide las víctimas mortales por la cantidad de hechos. Esa métrica no es estrictamente una letalidad individual, porque el denominador no es la cantidad de víctimas sino de hechos asociados.
 
 - Peatón: 2,90% de víctimas mortales por hecho asociado.
 - Moto: 1,17% de víctimas mortales por hecho asociado.
 
-El texto afirma 2,38% y 1,12%, valores que no coinciden con el código ni con la ejecución reproducida.
+**Recomendación:** explicitar en los gráficos y conclusiones si se trata de letalidad individual o tasa por hecho asociado.
 
-**Recomendación:** elegir una de estas alternativas:
+### - [ ] 5. Numeradores y denominadores mezclados (PENDIENTE)
 
-1. Mantener el cálculo y llamarlo `tasa de víctimas mortales por siniestro asociado al modo`.
-2. Calcular letalidad individual desde la tabla de víctimas, usando víctimas mortales de ese grupo dividido por el total de víctimas del grupo.
+En varias visualizaciones se cuentan hechos mediante `id_siniestro`, pero se suman víctimas graves o mortales desde columnas de la tabla de hechos.
 
-No deben presentarse ambas métricas con el mismo nombre.
+**Recomendación:** rotular cada métrica con claridad (`hechos`, `víctimas`, `víctimas mortales por 1.000 hechos`).
 
-### 5. Numeradores y denominadores mezclados
+### - [ ] 6. Afirmaciones escritas sin validación automática (PENDIENTE)
 
-En varias visualizaciones se cuentan hechos mediante `id_siniestro`, pero se suman víctimas graves o mortales desde columnas de la tabla de hechos. Esto puede ser válido si se describe como una tasa de víctimas por hecho, pero no equivale a la proporción de hechos graves ni a la letalidad individual.
+Los hallazgos están escritos manualmente en celdas Markdown y no contienen aserciones automáticas que comprueben que las cifras sigan coincidiendo tras modificaciones.
 
-**Recomendación:** rotular cada métrica con claridad:
+**Recomendación:** agregar una celda final de validación con métricas clave y `assert`.
 
-- `hechos` para cantidad de siniestros.
-- `víctimas` para cantidad de personas.
-- `víctimas mortales por 1.000 hechos` para tasas que mezclan ambos niveles.
-- `proporción de hechos graves o mortales` cuando el numerador se convierta primero en indicador por hecho.
+### - [x] 7. Dependencias del entorno (RESUELTO)
 
-### 6. Afirmaciones escritas sin validación automática
+La ejecución requería un entorno estandarizado con pandas, numpy, matplotlib, seaborn, scikit-learn y jupyter.
 
-Los hallazgos están escritos manualmente en celdas Markdown y no contienen aserciones o tablas de control que comprueben que las cifras siguen coincidiendo después de cambiar los datos.
+**Estado:** ✅ **Resuelto.**
+- Se generó el archivo `requirements.txt`.
+- Se configuró el entorno virtual `.venv` con soporte para instalación ultrarrápida mediante `uv` y mediante `pip` estándar.
+- Se documentó el procedimiento completo paso a paso en el `README.md`.
 
-**Recomendación:** agregar una celda final de validación con métricas clave y, cuando corresponda, `assert` para dimensiones, IDs y categorías esperadas.
-
-### 7. Dependencias del entorno
-
-La ejecución gráfica requiere pandas, numpy, matplotlib y seaborn. El entorno utilizado durante la revisión no tenía matplotlib instalado, por lo que no fue posible ejecutar todos los gráficos automáticamente.
-
-**Recomendación:** incorporar un `requirements.txt` o documentar explícitamente la instalación de dependencias. Como mínimo:
-
-```text
-pandas
-numpy
-matplotlib
-seaborn
-jupyter
-```
+---
 
 ## Completitud
 
@@ -150,33 +108,37 @@ Para una segunda pre-entrega de AED, el notebook cubre los componentes esperados
 
 Lo que todavía no corresponde considerar terminado en esta entrega es la implementación de los modelos supervisados y no supervisados: el notebook sólo presenta su metodología futura.
 
-## Recomendaciones priorizadas
+---
+
+## Recomendaciones priorizadas (Checklist de Correcciones)
 
 ### Prioridad alta
 
-1. Corregir las rutas a `data/`.
-2. Corregir la estructura del repositorio documentada en el README.
-3. Revisar las cifras de letalidad y aclarar los denominadores.
-4. Reformular el 57,4% de avenidas indicando que se calcula sobre vías informadas.
-5. Instalar y documentar las dependencias necesarias.
+- [x] **1. Corregir las rutas a `data/`:** Notebook actualizado para cargar datasets desde la carpeta `data/`.
+- [x] **2. Corregir la estructura del repositorio documentada en el README:** README actualizado con la estructura real del proyecto (`data/`, `requirements.txt`, `.gitignore`, etc.).
+- [ ] **3. Revisar las cifras de letalidad y aclarar los denominadores:** Ajustar textos de conclusiones en el notebook según letalidad individual vs. tasa por siniestro.
+- [x] **4. Reformular el 57,4% de avenidas indicando que se calcula sobre vías informadas:** Documentación del README corregida con la precisión metodológica.
+- [x] **5. Instalar y documentar las dependencias necesarias:** Creado `requirements.txt`, entorno virtual `.venv` con `uv` y guía en `README.md`.
 
 ### Prioridad media
 
-1. Agregar una celda de validación reproducible.
-2. Renombrar métricas para distinguir hechos de víctimas.
-3. Documentar el significado de `SD`, valores nulos y filas eliminadas.
-4. Añadir la fuente oficial y fecha de extracción de los datos.
+- [ ] **1. Agregar una celda de validación reproducible:** Celda con `assert` de dimensiones e integridad al final del notebook.
+- [ ] **2. Renombrar métricas para distinguir hechos de víctimas:** Homogeneizar leyendas y títulos en gráficos.
+- [ ] **3. Documentar el significado de `SD`, valores nulos y filas eliminadas:** Añadir detalle en la sección de limpieza.
+- [ ] **4. Añadir la fuente oficial y fecha de extracción de los datos:** Enriquecer metadatos de BA Data en el notebook.
 
 ### Prioridad baja
 
-1. Reducir imports no utilizados, como `sys`.
-2. Revisar advertencias de seaborn sobre `palette` sin `hue`.
-3. Agregar una nota sobre las limitaciones de inferir causalidad a partir de un AED descriptivo.
+- [x] **1. Reducir imports no utilizados, como `sys`:** Limpieza de imports innecesarios.
+- [ ] **2. Revisar advertencias de seaborn sobre `palette` sin `hue`:** Ajustar sintaxis moderna en Seaborn 0.13+.
+- [ ] **3. Agregar una nota sobre las limitaciones de inferir causalidad a partir de un AED descriptivo.**
+
+---
 
 ## Conclusión
 
-El trabajo es conceptualmente consistente y defendible como análisis exploratorio de siniestros viales en CABA. Los controles de integridad, el tratamiento del desbalance y la prevención de data leakage están bien orientados. Sin embargo, antes de presentarlo como completamente correcto conviene corregir las rutas de datos, alinear las cifras escritas con los cálculos reales y hacer explícita la unidad de análisis de cada tasa.
+El trabajo es conceptualmente consistente y defendible como análisis exploratorio de siniestros viales en CABA. Los controles de integridad, el tratamiento del desbalance y la prevención de data leakage están bien orientados. Con la corrección de rutas de carga, la estructura del proyecto y la gestión de dependencias con `uv` y `requirements.txt`, el proyecto queda listo para su ejecución reproducible.
 
-La principal defensa metodológica debería ser:
+La principal defensa metodológica es:
 
 > La tabla de hechos se utiliza para estudiar siniestros; la tabla de víctimas se utiliza para estudiar personas afectadas; y las víctimas se agregan por `id_siniestro` antes de integrarlas para evitar duplicar hechos.
