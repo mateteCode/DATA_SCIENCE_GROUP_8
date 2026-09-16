@@ -19,5 +19,7 @@ notebook>=7.0.0
 scikit-learn>=1.4.0
 scipy>=1.12.0
 
-# Utilidades complementarias de entrada/salida de datos
+# Utilidades complementarias de entrada/salida y análisis espacial
 openpyxl>=3.1.0
+shapely>=2.0.0
+
